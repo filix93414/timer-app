@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Timer Allenamento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f6f6f6;
+      --fg: #111;
+      --exercise: #e74c3c; /* rosso */
+      --rest: #3498db;     /* blu */
+      --card: #fff;
+      --muted: #666;
+      --accent: #111;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--fg);
+      background-color: var(--bg);
+      transition: background-color 0.25s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 16px 0 12px;
+      text-align: center;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      margin: 10px 0 16px;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .field { flex: 1 1 150px; min-width: 150px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    select, input[type="number"] {
+      width: 100%; padding: 10px 12px; font-size: 16px;
+      border: 1px solid #ddd; border-radius: 10px; background: #fff;
+    }
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      padding: 12px 16px; font-size: 16px; font-weight: 600;
+      border: none; border-radius: 10px; cursor: pointer;
+    }
+    .btn-primary { background: #111; color: #fff; }
+    .btn-secondary { background: #e9e9e9; color: #111; }
+    .btn-danger { background: #ffdad4; color: #8a1f12; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .timer {
+      text-align: center;
+      color: #fff;
+      border-radius: 18px;
+      padding: 24px;
+      margin: 18px 0;
+    }
+    .timer.exercise { background: var(--exercise); }
+    .timer.rest { background: var(--rest); }
+    .time {
+      font-variant-numeric: tabular-nums;
+      font-size: 72px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 1px;
+    }
+    .phase { margin-top: 8px; font-size: 14px; color: #fff; opacity: 0.9; }
+    .meta {
+      display: flex; justify-content: space-between; color: var(--muted);
+      font-size: 14px; margin-top: 6px;
+    }
+    .progress {
+      margin-top: 6px; font-weight: 700; font-size: 14px;
+    }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Timer Allenamento</h1>
+
+    <div class="card">
+      <div class="row">
+        <div class="field" style="flex: 1 1 100%">
+          <label>Programma</label>
+          <select id="programSelect"></select>
+        </div>
+        <div class="field">
+          <label>Durata esercizio (sec)</label>
+          <input type="number" id="exerciseTime" min="1" />
+        </div>
+        <div class="field">
+          <label>Durata riposo (sec)</label>
+          <input type="number" id="restTime" min="0" />
+        </div>
+        <div class="field">
+          <label>Ripetizioni</label>
+          <input type="number" id="reps" min="1" />
+        </div>
+      </div>
+      <div class="meta">
+        <div id="summary"></div>
+        <div class="progress" id="progressDisplay"></div>
+      </div>
+      <div class="hint">I progressi si salvano solo se i valori coincidono con il programma selezionato.</div>
+      <div class="btns" style="margin-top:10px;">
+        <button class="btn-primary" id="startBtn">Avvia</button>
+        <button class="btn-secondary" id="resetBtn">Reset progressi</button>
+      </div>
+    </div>
+
+    <div id="timer" class="timer exercise" aria-live="polite">
+      <div class="time" id="timeValue">00</div>
+      <div class="phase" id="phaseLabel">Pronto</div>
+    </div>
+  </div>
+
+  <script>
+    // Mini "database" dei programmi
+    const programs = {
+      settimana1: { name: "Settimana 1", exercise: 25, rest: 20, reps: 2 },
+      settimana2: { name: "Settimana 2", exercise: 35, rest: 20, reps: 3 },
+      settimana3: { name: "Settimana 3", exercise: 45, rest: 15, reps: 3 },
+      settimana3adv: { name: "Settimana 3 Advanced", exercise: 45, rest: 15, reps: 4 },
+      settimana4: { name: "Settimana 4", exercise: 60, rest: 15, reps: 4 }
+    };
+
+    // Elementi UI
+    const programSelect = document.getElementById("programSelect");
+    const exerciseInput = document.getElementById("exerciseTime");
+    const restInput = document.getElementById("restTime");
+    const repsInput = document.getElementById("reps");
+    const timerEl = document.getElementById("timer");
+    const timeValueEl = document.getElementById("timeValue");
+    const phaseLabelEl = document.getElementById("phaseLabel");
+    const progressDisplay = document.getElementById("progressDisplay");
+    const summaryEl = document.getElementById("summary");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const body = document.body;
+
+    // Stato
+    let tickInterval = null;
+    let flashInterval = null;
+    let flashing = false;
+    let running = false;
+
+    // Inizializza il dropdown
+    function initPrograms() {
+      programSelect.innerHTML = "";
+      Object.entries(programs).forEach(([key, p]) => {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = p.name;
+        programSelect.appendChild(opt);
+      });
+      // Default: settimana 1
+      programSelect.value = "settimana1";
+      loadProgram();
+    }
+
+    // Carica valori del programma selezionato
+    function loadProgram() {
+      const key = programSelect.value;
+      const p = programs[key];
+      exerciseInput.value = p.exercise;
+      restInput.value = p.rest;
+      repsInput.value = p.reps;
+      updateSummary();
+      updateProgressUI();
+    }
+
+    // Riepilogo in alto a destra
+    function updateSummary() {
+      const e = parseInt(exerciseInput.value || "0");
+      const r = parseInt(restInput.value || "0");
+      const reps = parseInt(repsInput.value || "0");
+      const totalSec = reps * (e + r);
+      summaryEl.textContent = `Totale: ${totalSec}s`;
+    }
+
+    // Progressi
+    function progressKey(key) {
+      return "progress_" + key;
+    }
+    function loadProgress(key) {
+      const v = localStorage.getItem(progressKey(key));
+      return v ? parseInt(v) : 0;
+    }
+    function saveProgress(key) {
+      const current = loadProgress(key);
+      localStorage.setItem(progressKey(key), String(current + 1));
+    }
+    function resetProgress() {
+      if (running) return;
+      if (confirm("Sei sicuro di voler resettare tutti i progressi?")) {
+        Object.keys(programs).forEach(k => localStorage.removeItem(progressKey(k)));
+        updateProgressUI();
+        alert("Progressi resettati.");
+      }
+    }
+    function updateProgressUI() {
+      const key = programSelect.value;
+      const count = loadProgress(key);
+      progressDisplay.textContent = `Completato ${count} ${count === 1 ? "volta" : "volte"}`;
+    }
+
+    // Utility lampeggio
+    function startFlashing(type) {
+      stopFlashing();
+      flashing = true;
+      const color = type === "exercise" ? getComputedStyle(document.documentElement).getPropertyValue('--exercise').trim() : getComputedStyle(document.documentElement).getPropertyValue('--rest').trim();
+      let flip = false;
+      flashInterval = setInterval(() => {
+        body.style.backgroundColor = flip ? "#ffffff" : color;
+        flip = !flip;
+      }, 300);
+    }
+    function stopFlashing() {
+      if (flashInterval) {
+        clearInterval(flashInterval);
+        flashInterval = null;
+      }
+      flashing = false;
+      body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    }
+
+    // Controlli UI
+    function setControlsDisabled(disabled) {
+      programSelect.disabled = disabled;
+      exerciseInput.disabled = disabled;
+      restInput.disabled = disabled;
+      repsInput.disabled = disabled;
+      startBtn.disabled = disabled;
+      resetBtn.disabled = disabled;
+    }
+
+    // Formatta mm:ss se vuoi (qui solo ss)
+    function renderTime(t) {
+      timeValueEl.textContent = String(t);
+    }
+
+    // Avvio allenamento
+    function startWorkout() {
+      if (running) return;
+
+      const exerciseTime = parseInt(exerciseInput.value);
+      const restTime = parseInt(restInput.value);
+      const reps = parseInt(repsInput.value);
+
+      if (!Number.isFinite(exerciseTime) || exerciseTime < 1) { alert("Durata esercizio non valida."); return; }
+      if (!Number.isFinite(restTime) || restTime < 0) { alert("Durata riposo non valida."); return; }
+      if (!Number.isFinite(reps) || reps < 1) { alert("Ripetizioni non valide."); return; }
+
+      const selectedKey = programSelect.value;
+      const selectedDefaults = programs[selectedKey];
+      const snapshot = { exerciseTime, restTime, reps, selectedKey };
+
+      // Costruisci la sequenza
+      const sequence = [];
+      for (let i = 0; i < reps; i++) {
+        sequence.push({ type: "exercise", time: exerciseTime, label: "Esercizio" });
+        sequence.push({ type: "rest", time: restTime, label: "Riposo" });
+      }
+
+      running = true;
+      setControlsDisabled(true);
+      phaseLabelEl.textContent = "Inizio";
+      runSequence(sequence, 0, snapshot, selectedDefaults);
+    }
+
+    // Esecuzione sequenza
+    function runSequence(sequence, index, snapshot, defaults) {
+      if (index >= sequence.length) {
+        onWorkoutComplete(snapshot, defaults);
+        return;
+      }
+
+      const current = sequence[index];
+      let timeLeft = current.time;
+      timerEl.className = "timer " + current.type;
+      phaseLabelEl.textContent = current.label;
+      renderTime(timeLeft);
+      stopFlashing(); // assicura sfondo pulito
+
+      // Pulisci eventuale tick precedente
+      if (tickInterval) clearInterval(tickInterval);
+
+      tickInterval = setInterval(() => {
+        timeLeft--;
+        renderTime(timeLeft);
+
+        if (timeLeft === 3 && current.time >= 3 && !flashing) {
+          startFlashing(current.type);
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(tickInterval);
+          tickInterval = null;
+          stopFlashing();
+          runSequence(sequence, index + 1, snapshot, defaults);
+        }
+      }, 1000);
+    }
+
+    // Fine allenamento
+    function onWorkoutComplete(snapshot, defaults) {
+      timerEl.className = "timer exercise";
+      phaseLabelEl.textContent = "Fatto!";
+      renderTime(0);
+      stopFlashing();
+      running = false;
+      setControlsDisabled(false);
+
+      const matchesDefaults =
+        snapshot.exerciseTime === defaults.exercise &&
+        snapshot.restTime === defaults.rest &&
+        snapshot.reps === defaults.reps;
+
+      if (!matchesDefaults) {
+        alert(
+          "Allenamento completato.\nNota: i valori non corrispondono al programma selezionato, quindi il progresso non verrà salvato."
+        );
+        return;
+      }
+
+      const confirmed = confirm(
+        "Hai completato l'esercizio con successo?\nVuoi salvare il progresso per \"" + programs[snapshot.selectedKey].name + "\"?"
+      );
+      if (confirmed) {
+        saveProgress(snapshot.selectedKey);
+        updateProgressUI();
+      }
+    }
+
+    // Event bindings
+    programSelect.addEventListener("change", () => {
+      if (running) return;
+      loadProgram();
+    });
+    [exerciseInput, restInput, repsInput].forEach(el => {
+      el.addEventListener("input", updateSummary);
+    });
+    startBtn.addEventListener("click", startWorkout);
+    resetBtn.addEventListener("click", resetProgress);
+
+    // Bootstrap
+    window.addEventListener("load", initPrograms);
+  </script>
+</body>
+</html>
