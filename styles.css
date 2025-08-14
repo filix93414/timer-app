@@ -1,0 +1,225 @@
+:root {
+  color-scheme: dark;
+  --bg: #0f1115;
+  --panel: #151821;
+  --muted: #8b90a1;
+  --text: #e7e9f0;
+  --accent: #6aa9ff;
+  --accent-2: #9bdb6d;
+  --danger: #ff6b6b;
+  --line: #232736;
+  --btn: #262b3a;
+  --btn-hover: #2f3550;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: radial-gradient(1200px 800px at 20% 0%, #121626, #0b0d13 60%);
+  color: var(--text);
+}
+
+.wrap {
+  max-width: 1000px;
+  margin: 24px auto 56px;
+  padding: 0 16px;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+.top h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: .2px;
+}
+
+.slot {
+  background: linear-gradient(180deg, rgba(255,255,255,.018), transparent 30%), var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.slot label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+#progSel {
+  width: 200px;
+  background: var(--btn);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.count {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 12px;
+}
+.count-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.count-val {
+  font-size: 24px;
+  font-weight: 700;
+}
+.btn.ghost {
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 16px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.phase .phase-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(255,255,255,.06);
+}
+.phase .phase-row:last-child { border-bottom: none; }
+.phase .lbl { color: var(--muted); font-size: 12px; }
+.phase .val { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.rate .rate-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rate .lbl { color: var(--muted); font-size: 12px; }
+#rateInput {
+  width: 110px;
+  background: var(--btn);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 16px;
+}
+.rate-quick {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  background: var(--btn);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: .15s ease;
+}
+.btn:hover { background: var(--btn-hover); }
+.btn.primary { background: linear-gradient(180deg, #719dff, #5f83ff); color: #0d1330; border-color: transparent; }
+.btn.danger { background: linear-gradient(180deg, #ff8686, #ff6b6b); color: #2a1010; border-color: transparent; }
+.btn.micro { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.bar-wrap {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 320px;
+}
+.bar-track {
+  position: relative;
+  width: 48px;
+  height: 280px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.35), var(--shadow);
+}
+.bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, var(--accent-2), #56c36a 60%);
+  transition: height 0.6s linear;
+  will-change: height;
+}
+.bar-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.modal[hidden] { display: none; }
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 50;
+}
+.modal-box {
+  width: min(420px, 92vw);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+.modal-text {
+  padding: 10px 2px 18px;
+  line-height: 1.4;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: end;
+}
+
+/* Responsive */
+@media (max-width: 840px) {
+  .grid { grid-template-columns: 1fr; }
+  .top { grid-template-columns: 1fr; gap: 12px; }
+  #progSel { width: 100%; }
+}
+
+.slot.info {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  align-items: center;
+  flex-wrap: wrap;
+}
