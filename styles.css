@@ -14,11 +14,28 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+
+html, body { 
+  height: 100%; 
+  overscroll-behavior: none; /* evita effetto rubber-band */
+}
+
+html {
+  background-color: #000; /* uniforme ovunque */
+}
+
 body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  background: radial-gradient(1200px 800px at 20% 0%, #121626, #0b0d13 60%);
+  background-color: #000; /* fallback pieno */
+  background-image: radial-gradient(
+    1200px 800px at 20% 0%, 
+    #121626, 
+    #0b0d13 60%
+  );
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* opzionale, evita 'gap' in scroll */
+  background-size: cover;
   color: var(--text);
 }
 
