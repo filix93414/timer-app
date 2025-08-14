@@ -14,12 +14,32 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+
+html, body {
+  height: 100%;
+  overscroll-behavior: contain; /* blocca il rubber band */
+}
+
+html {
+  background-color: #0b0d13; /* tono scuro coerente con il gradiente */
+}
+
 body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  background: radial-gradient(1200px 800px at 20% 0%, #121626, #0b0d13 60%);
   color: var(--text);
+
+  /* Sfondo blu uniforme */
+  background-color: #0b0d13;
+  background-image: radial-gradient(
+    1200px 800px at 20% 0%,
+    #121626 0,
+    #0b0d13 60%,
+    #0b0d13 100%
+  );
+  background-repeat: no-repeat;
+  background-position: center top;
+  min-height: 100svh;
 }
 
 .wrap {
@@ -212,7 +232,7 @@ body {
 /* Responsive */
 @media (max-width: 840px) {
   .grid {
-    grid-template-columns: 1fr; /* panel impilati su mobile */
+    grid-template-columns: 1fr; /* pannelli in colonna su mobile */
   }
   .top { 
     grid-template-columns: 1fr; 
