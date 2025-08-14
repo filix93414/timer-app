@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Workout Timer</title>
   <link rel="stylesheet" href="stile.css?v=20250814">
+  <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
   <main class="wrap">
@@ -101,5 +102,13 @@
   </div>
 
   <script src="app.js"></script>
+  <script>
+	  if ('serviceWorker' in navigator) {
+		window.addEventListener('load', () => {
+		  navigator.serviceWorker.register('./sw.js', { scope: './' })
+			.catch(err => console.error('SW registration failed', err));
+		});
+	  }
+	</script>
 </body>
 </html>
